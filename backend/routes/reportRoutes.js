@@ -1,5 +1,5 @@
 import express from "express";
-import { writeFileSync } from "fs";
+import { writeFileSync, mkdirSync, existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { protect, authorize } from '../middleware/authMiddleware.js';
@@ -13,7 +13,11 @@ const __dirname = path.dirname(__filename);
 router.get("/generate-pdf", protect, authorize(['admin', 'superadmin']), (req, res) => {
   const csvData = `Name,Email,Score\nJohn,john@example.com,95\nJane,jane@example.com,89`;
 
-  const filePath = path.join(__dirname, "../temp/report.csv");
+  const tempDir = path.join(__dirname, "../temp");
+  if (!existsSync(tempDir)) {
+    mkdirSync(tempDir, { recursive: true });
+  }
+  const filePath = path.join(tempDir, "report.csv");
   writeFileSync(filePath, csvData);
 
   res.download(filePath, "report.csv", (err) => {

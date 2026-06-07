@@ -140,6 +140,62 @@ export const logoutAdmin = asyncHandler(async (req, res) => {
     });
 });
 
- export const registerAdmin = asyncHandler(async (req, res) => {
-  //the logic goes here
- });
+export const registerAdmin = asyncHandler(async (req, res) => {
+    const { username, email, password, role } = req.body;
+
+    // 1. Prevent duplicate accounts
+    const existingAdmin = await Admin.findOne({
+        $or: [{ email }, { username }]
+    });
+
+    if (existingAdmin) {
+        res.status(409);
+        throw new Error('An admin with this email or username already exists');
+    }
+
+    // 2. Create the admin (password is hashed by the pre-save hook on the model)
+    const admin = await Admin.create({
+        username,
+        email,
+        password,
+        role: role || 'admin'
+    });
+
+    // 3. Issue tokens so the new admin is logged in immediately
+    const accessToken = admin.generateAccessToken();
+    const refreshToken = admin.generateRefreshToken();
+
+    admin.refreshToken = refreshToken;
+    await admin.save({ validateBeforeSave: false });
+
+    const accessTokenCookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 15 * 60 * 1000, // 15 minutes
+        path: '/'
+    };
+
+    const refreshTokenCookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/'
+    };
+
+    res.status(201)
+        .cookie('accessToken', accessToken, accessTokenCookieOptions)
+        .cookie('refreshToken', refreshToken, refreshTokenCookieOptions)
+        .json({
+            success: true,
+            message: 'Admin registered successfully',
+            accessToken,
+            data: {
+                id: admin._id,
+                username: admin.username,
+                email: admin.email,
+                role: admin.role
+            }
+        });
+});

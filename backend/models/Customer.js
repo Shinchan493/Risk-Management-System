@@ -80,10 +80,8 @@ CustomerSchema.pre('save', function (next) {
   next();
 });
 
-// --- Add Indexes Here ---
-CustomerSchema.index({ customerId: 1 });
-CustomerSchema.index({ email: 1 });
-// --- End Indexes ---
+// Note: customerId and email already get unique indexes from `unique: true`
+// in the schema fields above, so no explicit .index() calls are needed here.
 
 const Customer = mongoose.model('Customer', CustomerSchema);
 

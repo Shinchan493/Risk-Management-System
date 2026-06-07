@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed:customers": "node seedCustomers.js"
+    "seed:risks": "node seedcut.js"
   },
   "keywords": [
     "customer_return_risk_analyzer",

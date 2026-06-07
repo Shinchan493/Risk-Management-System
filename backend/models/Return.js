@@ -81,9 +81,8 @@ const ReturnSchema = new mongoose.Schema(
   }
 );
 
-// Remove duplicate indexes - keep only one method
+// returnId already has a unique index from `unique: true` in the schema field.
 ReturnSchema.index({ customer: 1 });
-ReturnSchema.index({ returnId: 1 });
 
 const Return = mongoose.model('Return', ReturnSchema);
 
